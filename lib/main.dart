@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mygpt/constants.dart';
+import 'package:mygpt/providers/chat_provider.dart';
 import 'package:mygpt/widgets/message_input_panel.dart';
 import 'package:mygpt/widgets/messages_container.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,14 +14,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MyGPT',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: myGptBaseColor),
-        useMaterial3: true,
+    return Provider(
+      create: (context) => ChatProvider(),
+      child: MaterialApp(
+        title: 'MyGPT',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: myGptBaseColor),
+          useMaterial3: true,
+        ),
+        home: const MainView(),
       ),
-      home: const MainView(),
     );
   }
 }

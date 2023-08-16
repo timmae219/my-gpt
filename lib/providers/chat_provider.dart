@@ -18,6 +18,9 @@ class ChatProvider with ChangeNotifier {
     const apiKey = String.fromEnvironment('OPENAI_API_KEY');
     const apiBase = 'https://api.openai.com/v1/chat/completions';
 
+    final messagesJson =
+        jsonEncode(messages.map((message) => message.toJson()).toList());
+
     final requestHeaders = <String, String>{
       'Authorization': 'Bearer $apiKey',
       'Content-Type': 'application/json',
@@ -25,7 +28,8 @@ class ChatProvider with ChangeNotifier {
 
     final requestBody = jsonEncode(<String, dynamic>{
       'model': "gpt-3.5-turbo",
-      // TODO: add messages, question and stream = True
+      'messages': messagesJson,
+      'stream': true,
     });
 
     final request = http.Request('POST', Uri.parse(apiBase));
@@ -35,6 +39,25 @@ class ChatProvider with ChangeNotifier {
 
     final http.StreamedResponse openAIResponse = await request.send();
 
-    // TODO: grep response stream
+    if (openAIResponse.statusCode == 200) {
+      final messageStreamController = StreamController<String>();
+      const messageStream = Stream<String>.empty();
+      messageStreamController.addStream(messageStream);
+
+      openAIResponse.stream.listen((value) {
+        final decodedBytes = utf8.decode(value);
+        // TODO: transform value!!
+        messageStreamController.add(decodedBytes);
+      });
+
+      messages.add(Message(
+          messageStream: messageStreamController, sender: Sender.openai));
+    } else {
+      messages.add(Message(
+        messageStream: StreamController()
+          ..addStream(Stream<String>.value('Something went wrong.')),
+        sender: Sender.openai,
+      ));
+    }
   }
 }
