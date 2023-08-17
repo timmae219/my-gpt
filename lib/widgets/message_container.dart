@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mygpt/models/message.dart';
 
-class MessageContainer extends StatelessWidget {
+class MessageContainer extends StatefulWidget {
   const MessageContainer({
     Key? key,
     required this.message,
@@ -10,8 +10,15 @@ class MessageContainer extends StatelessWidget {
   final Message message;
 
   @override
+  State<MessageContainer> createState() => _MessageContainerState();
+}
+
+class _MessageContainerState extends State<MessageContainer> {
+  final String bufferedMessage = '';
+
+  @override
   Widget build(BuildContext context) {
-    final messageIsFromUs = message.sender == Sender.you;
+    final messageIsFromUs = widget.message.sender == Sender.you;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: LayoutBuilder(builder: (context, constraints) {
@@ -25,6 +32,7 @@ class MessageContainer extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: messageIsFromUs
@@ -40,7 +48,11 @@ class MessageContainer extends StatelessWidget {
                     )
                   ],
                 ),
-                Text(message.messageContent),
+                StreamBuilder(
+                    stream: widget.message.messageStream.stream,
+                    builder: (context, snapshot) {
+                      return Text(widget.message.messageContent);
+                    }),
               ],
             ),
           ),

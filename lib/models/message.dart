@@ -17,17 +17,16 @@ class Message {
 
   Stream<String> get stream => messageStream.stream;
 
-  String get messageContent => _bufferedMessageContent.join(' ');
+  String get messageContent => _bufferedMessageContent.join('');
 
-  void addMessage(String content) {
+  void addToken(String content) {
     _bufferedMessageContent.add(content);
-    messageStream.add(content);
   }
 
   Map<String, dynamic> toJson() {
     return {
       'role': sender == Sender.openai ? 'assistant' : 'user',
-      'content': _bufferedMessageContent.join(' '),
+      'content': _bufferedMessageContent.join(''),
     };
   }
 

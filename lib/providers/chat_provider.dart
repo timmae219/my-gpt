@@ -13,7 +13,7 @@ class ChatProvider with ChangeNotifier {
       Message(
         messageStream: StreamController(),
         sender: Sender.you,
-      )..addMessage(question),
+      )..addToken(question),
     );
     notifyListeners();
 
@@ -30,7 +30,7 @@ class ChatProvider with ChangeNotifier {
     final requestBody = jsonEncode(<String, dynamic>{
       'model': "gpt-3.5-turbo",
       'messages': messages,
-      'stream': false,
+      'stream': true,
     });
 
     print('Encoded request body: $requestBody');
@@ -45,26 +45,44 @@ class ChatProvider with ChangeNotifier {
     if (openAIResponse.statusCode == 200) {
       print('Response successful!');
       final messageStreamController = StreamController<String>();
-      const messageStream = Stream<String>.empty();
-      await messageStreamController.addStream(messageStream);
 
-      openAIResponse.stream.listen((value) {
+      final openaiMessage = Message(
+          messageStream: messageStreamController, sender: Sender.openai);
+
+      messages.add(openaiMessage);
+      notifyListeners();
+
+      openAIResponse.stream.listen((value) async {
         final decodedBytes = utf8.decode(value);
-        final resultingToken = decodedBytes.replaceAll('data:', '');
-        messageStreamController.add(resultingToken);
-        print(resultingToken);
-      });
+        final rawJsonBunch = decodedBytes.replaceAll('data: ', '').trim();
 
-      messages.add(Message(
-          messageStream: messageStreamController, sender: Sender.openai));
+        final lines = rawJsonBunch.split('\n\n');
+
+        for (final rawJson in lines) {
+          if (rawJson != '[DONE]') {
+            final decodedFullJson = jsonDecode(rawJson);
+            final choice = decodedFullJson['choices'][0];
+            if (choice['finish_reason'] == 'stop') {
+              await messageStreamController.close();
+              return;
+            } else {
+              final content = choice['delta']['content'];
+              messageStreamController.add(content);
+              openaiMessage.addToken(content);
+              notifyListeners();
+            }
+          } else {
+            await messageStreamController.close();
+          }
+        }
+      });
     } else {
       print('Request failed with status code ${openAIResponse.statusCode}');
       messages.add(
         Message(messageStream: StreamController(), sender: Sender.openai)
-          ..addMessage('Sorry, something went wrong.'),
+          ..addToken('Sorry, something went wrong.'),
       );
+      notifyListeners();
     }
-
-    notifyListeners();
   }
 }
