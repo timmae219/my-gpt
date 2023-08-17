@@ -9,20 +9,18 @@ class ChatProvider with ChangeNotifier {
   List<Message> messages = [];
 
   Future<void> ask({required String question}) async {
-    messages.add(Message(
-      messageStream: StreamController()
-        ..addStream(Stream<String>.value(question)),
-      sender: Sender.you,
-    ));
+    messages.add(
+      Message(
+        messageStream: StreamController(),
+        sender: Sender.you,
+      )..addMessage(question),
+    );
     notifyListeners();
 
     print('Added question to messages: $question');
 
     const apiKey = String.fromEnvironment('OPENAI_API_KEY');
     const apiBase = 'https://api.openai.com/v1/chat/completions';
-
-    final messagesJson =
-        jsonEncode(messages.map((message) => message.toJson()).toList());
 
     final requestHeaders = <String, String>{
       'Authorization': 'Bearer $apiKey',
@@ -31,11 +29,11 @@ class ChatProvider with ChangeNotifier {
 
     final requestBody = jsonEncode(<String, dynamic>{
       'model': "gpt-3.5-turbo",
-      'messages': messagesJson,
-      'stream': true,
+      'messages': messages,
+      'stream': false,
     });
 
-    print('Encoded request body: $question');
+    print('Encoded request body: $requestBody');
 
     final request = http.Request('POST', Uri.parse(apiBase));
     request
@@ -48,7 +46,7 @@ class ChatProvider with ChangeNotifier {
       print('Response successful!');
       final messageStreamController = StreamController<String>();
       const messageStream = Stream<String>.empty();
-      messageStreamController.addStream(messageStream);
+      await messageStreamController.addStream(messageStream);
 
       openAIResponse.stream.listen((value) {
         final decodedBytes = utf8.decode(value);
@@ -61,11 +59,10 @@ class ChatProvider with ChangeNotifier {
           messageStream: messageStreamController, sender: Sender.openai));
     } else {
       print('Request failed with status code ${openAIResponse.statusCode}');
-      messages.add(Message(
-        messageStream: StreamController()
-          ..addStream(Stream<String>.value('Something went wrong.')),
-        sender: Sender.openai,
-      ));
+      messages.add(
+        Message(messageStream: StreamController(), sender: Sender.openai)
+          ..addMessage('Sorry, something went wrong.'),
+      );
     }
 
     notifyListeners();

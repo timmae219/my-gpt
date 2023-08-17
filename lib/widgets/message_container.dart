@@ -16,11 +16,15 @@ class MessageContainer extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: LayoutBuilder(builder: (context, constraints) {
         return Container(
-          width: constraints.maxWidth / 2,
-          color: messageIsFromUs ? Colors.teal : Colors.lightBlueAccent,
+          width: MediaQuery.of(context).size.width / 2,
+          decoration: BoxDecoration(
+            color: messageIsFromUs ? Colors.teal : Colors.lightBlueAccent,
+            borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: messageIsFromUs
