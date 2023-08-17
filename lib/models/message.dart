@@ -17,6 +17,8 @@ class Message {
 
   Stream<String> get stream => messageStream.stream;
 
+  String get messageContent => _bufferedMessageContent.join(' ');
+
   void addMessage(String content) {
     _bufferedMessageContent.add(content);
     messageStream.add(content);

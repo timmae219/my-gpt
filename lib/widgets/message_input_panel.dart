@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:mygpt/providers/chat_provider.dart';
+import 'package:provider/provider.dart';
 
-class MessageInputPanel extends StatelessWidget {
+class MessageInputPanel extends StatefulWidget {
   const MessageInputPanel({
     super.key,
   });
+
+  @override
+  State<MessageInputPanel> createState() => _MessageInputPanelState();
+}
+
+class _MessageInputPanelState extends State<MessageInputPanel> {
+  final inputController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +32,21 @@ class MessageInputPanel extends StatelessWidget {
                 scrollDirection: Axis.vertical,
                 child: TextFormField(
                   maxLines: null,
+                  controller: inputController,
+                  decoration: const InputDecoration(
+                    hintText: 'Ask me something...',
+                  ),
                 ),
               ),
             )),
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Provider.of<ChatProvider>(context, listen: false)
+                    .ask(question: inputController.value.text);
+                setState(() {
+                  inputController.text = '';
+                });
+              },
               icon: const Icon(Icons.send),
             )
           ],
